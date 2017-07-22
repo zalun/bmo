@@ -7,43 +7,56 @@ use Data::Dumper;
 use Bugzilla::Install::Localconfig ();
 use Bugzilla::Install::Util qw(install_string);
 
-my %localconfig = (webservergroup => 'app');
-
-my %override = (
-    'inbound_proxies'     => 1,
-    'shadowdb'            => 1,
-    'shadowdbhost'        => 1,
-    'shadowdbport'        => 1,
-    'shadowdbsock'        => 1
-);
-
-# clean env.
-foreach my $key (keys %ENV) {
-    if ($key =~ /^BMO_(.+)$/) {
-        my $name = $1;
-        if ($override{$name}) {
-            $localconfig{param_override}{$name} = delete $ENV{$key};
-        }
-        else {
-            $localconfig{$name} = delete $ENV{$key};
-        }
-    }
-}
-
-write_localconfig(\%localconfig);
-sleep(10);
-system('perl', 'checksetup.pl', '--no-templates', '--no-permissions');
-
 my $cmd = shift @ARGV or die "usage: init.pl CMD";
 my $method = "run_$cmd";
 __PACKAGE__->$method();
 
+sub run_test {
+    exec("prove", @ARGV, "t");
+}
+
 sub run_httpd {
+    _configure();
+    _check_data_dir();
     exec("/usr/sbin/httpd", "-DFOREGROUND", "-f", "/opt/bmo/httpd/httpd.conf");
 }
 
 sub run_shell {
+    _configure();
     exec("/bin/bash", "-l");
+}
+
+sub _check_data_dir {
+    die "/app/data is missing params file\n" unless unless -f "/app/data/params";
+}
+
+sub _configure {
+    my %localconfig = ( webservergroup => 'app' );
+
+    my %override = (
+        'inbound_proxies' => 1,
+        'shadowdb'        => 1,
+        'shadowdbhost'    => 1,
+        'shadowdbport'    => 1,
+        'shadowdbsock'    => 1
+    );
+
+    # clean env.
+    foreach my $key ( keys %ENV ) {
+        if ( $key =~ /^BMO_(.+)$/ ) {
+            my $name = $1;
+            if ( $override{$name} ) {
+                $localconfig{param_override}{$name} = delete $ENV{$key};
+            }
+            else {
+                $localconfig{$name} = delete $ENV{$key};
+            }
+        }
+    }
+
+    write_localconfig( \%localconfig );
+    sleep(10);
+    system( 'perl', 'checksetup.pl', '--no-templates', '--no-permissions' );
 }
 
 sub write_localconfig {

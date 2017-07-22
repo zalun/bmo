@@ -22,7 +22,6 @@ RUN ln -sv /opt/bmo/local /app/local && \
 
 USER app
 RUN perl checksetup.pl --no-database --default-localconfig && \
-    prove t && \
     rm -rf /app/data && mkdir /app/data
 
 ENV PORT=8000

@@ -17,9 +17,18 @@ jobs:
           name: install git and ssh
           command: apk update && apk add git openssh-client
       - checkout
-      - run: |
-          docker build -t $BMO_IMAGE_NAME:$CIRCLE_BRANCH .
-          if [[ -n "$DOCKER_USER" && -n "$DOCKER_PASS" ]]; then
-            docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-            docker push $BMO_IMAGE_NAME:$CIRCLE_BRANCH
-          fi
+      - run:
+          name: build container
+          command: docker build -t $BMO_IMAGE_NAME:$CIRCLE_BRANCH .
+      - run:
+          name: run sanity tests
+          command: docker run $BMO_IMAGE_NAME:$CIRCLE_BRANCH test
+      - run:
+          name: upload to dockerhub (if possible)
+          command: |
+            if [[ -n "$DOCKER_USER" && -n "$DOCKER_PASS" ]]; then
+              docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+              docker push $BMO_IMAGE_NAME:$CIRCLE_BRANCH
+            else
+              echo "No DOCKER_USER/DOCKER_PASS, skipping docker push"
+            fi
