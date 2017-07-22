@@ -27,7 +27,7 @@ sub run_shell {
 }
 
 sub _check_data_dir {
-    die "/app/data is missing params file\n" unless unless -f "/app/data/params";
+    die "/app/data is missing params file\n" unless -f "/app/data/params";
 }
 
 sub _configure {
