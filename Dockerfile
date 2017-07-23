@@ -18,11 +18,13 @@ RUN ln -sv /opt/bmo/local /app/local && \
     chown -R app:app /app && \
     cp /app/docker_files/httpd.conf /opt/bmo/httpd/ && \
     mkdir /opt/bmo/bin && \
-    cp /app/docker_files/init.pl /opt/bmo/bin/init.pl
+    cp /app/docker_files/init.pl /opt/bmo/bin/init.pl && \
+    perl -c /opt/bmo/bin/init.pl
 
 USER app
 RUN perl checksetup.pl --no-database --default-localconfig && \
-    rm -rf /app/data && mkdir /app/data
+    rm -rf /app/data /app/localconfig && \
+    mkdir /app/data
 
 ENV PORT=8000
 
