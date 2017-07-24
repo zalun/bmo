@@ -27,25 +27,25 @@ jobs:
               --env-file=docker_files/tests.env \
               $BMO_IMAGE_NAME:$CIRCLE_BRANCH prove t
       - run:
-          name: create bmo network
+          name: create bmo network for tests
           command: docker network create bmo_net
       - run:
-          name: create /data volume
+          name: create /data volume for tests
           command: docker volume create bmo_data
       - run:
-          name: start mysql
+          name: start mysql for tests
           command: |
             docker run --name bmo-mysql \
                        --network bmo_net \
                        --env-file=docker_files/tests.env \
                        --rm -d \
-                       mozillabteam/mysql:5.6
+                       mozillabteam/bmo-mysql:5.6
       - run:
-          name: start memcached
+          name: start memcached for tests
           command: docker run --name bmo-memcached --network bmo_net -d memcached
 
       - run:
-          name: populate mysql and data volume
+          name: populate mysql and data volume for tests
           command: |
             docker run --network bmo_net \
                        --env-file=docker_files/tests.env \
