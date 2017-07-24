@@ -3,9 +3,10 @@ MYMETA.*
 Makefile
 blib
 local
+data
+localconfig
 pm_to_blib
 template_cache
-vagrant_support
 \#*\#
 */\#*\#
 */*/\#*\#
