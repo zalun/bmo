@@ -10,7 +10,7 @@ use Data::Dumper;
 use LWP::Simple qw(get);
 use English qw($EUID);
 use Getopt::Long qw(:config gnu_getopt);
-use File::Copy::Recursive;
+use File::Copy::Recursive qw(dircopy);
 
 my $cmd = shift @ARGV;
 my $func = __PACKAGE__->can("cmd_$cmd") // sub { system_verbose($cmd, @ARGV) };
