@@ -59,7 +59,7 @@ jobs:
                        --env-file=docker_files/tests.env \
                        -v bmo_data:/app/data \
                        -d \
-                       $BMO_IMAGE_NAME:$CIRCLE_BRANCH httpd -DHTTPD_IN_SUBDIR
+                       $BMO_IMAGE_NAME:$CIRCLE_BRANCH qa_httpd
       - run:
           name: check heartbeat
           command: |

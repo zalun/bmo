@@ -28,7 +28,7 @@ sub cmd_httpd  {
 
 sub cmd_qa_httpd {
     copy_qa_extension();
-    cmd_httpd();
+    cmd_httpd('-DHTTPD_IN_SUBDIR', @_);
 }
 
 sub cmd_load_test_data {
