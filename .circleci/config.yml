@@ -52,14 +52,14 @@ jobs:
                        -v bmo_data:/app/data \
                        $BMO_IMAGE_NAME:$CIRCLE_BRANCH load_test_data
       - run:
-        name: start httpd for testing web services
-        command: |
-          docker run --name bmo-web \
-                     --network bmo_net \
-                     --env-file=docker_files/tests.env \
-                     -v bmo_data:/app/data \
-                     -d \
-                     $BMO_IMAGE_NAME:$CIRCLE_BRANCH httpd
+          name: start httpd for testing web services
+          command: |
+            docker run --name bmo-web \
+                       --network bmo_net \
+                       --env-file=docker_files/tests.env \
+                       -v bmo_data:/app/data \
+                       -d \
+                       $BMO_IMAGE_NAME:$CIRCLE_BRANCH httpd
 
       - run:
           name: check heartbeat
