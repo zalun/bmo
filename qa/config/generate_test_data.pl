@@ -30,7 +30,7 @@ my $config;
 
 BEGIN {
     print "reading the config file...\n";
-    my $conf_file = "selenium_test.conf";
+    my $conf_file = $ENV{BZ_QA_CONF_FILE} // "selenium_test.conf";
     if (@ARGV) {
         $conf_file = shift @ARGV;
     }

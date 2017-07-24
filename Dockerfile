@@ -12,6 +12,9 @@ RUN wget -q https://s3.amazonaws.com/moz-devservices-bmocartons/bmo/vendor.tar.g
         | perl -nE 'chomp; unless (-f $_) { $missing++; say $_ } END { exit 1 if $missing }' && \
     useradd -u 10001 -U app -m
 
+ENV BZ_QA_CONF_FILE=/app/docker_files/selenium_test.conf
+ENV PORT=8000
+
 COPY . /app
 WORKDIR /app
 RUN ln -sv /opt/bmo/local /app/local && \
@@ -25,8 +28,6 @@ USER app
 RUN perl checksetup.pl --no-database --default-localconfig && \
     rm -rf /app/data /app/localconfig && \
     mkdir /app/data
-
-ENV PORT=8000
 
 EXPOSE $PORT
 
