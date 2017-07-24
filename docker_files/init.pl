@@ -97,7 +97,7 @@ sub wait_for_httpd {
     foreach (1..12) {
         warn "checking if httpd is up...\n" if $_ > 1;
         my $resp = get("$url/__lbheartbeat__");
-        if ($resp =~ /^\s+httpd OK/) {
+        if ($resp =~ /^httpd OK$/) {
             $ok = 1;
             last;
         }
