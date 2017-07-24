@@ -22,7 +22,10 @@ jobs:
           command: docker build -t $BMO_IMAGE_NAME:$CIRCLE_BRANCH .
       - run:
           name: run sanity tests
-          command: docker run $BMO_IMAGE_NAME:$CIRCLE_BRANCH prove t
+          command: |
+            docker run \
+              --env-file=docker_files/tests.env \
+              $BMO_IMAGE_NAME:$CIRCLE_BRANCH prove t
       - run:
           name: create bmo network
           command: docker network create bmo_net
@@ -45,14 +48,15 @@ jobs:
           name: populate mysql and data volume
           command: |
             docker run --network bmo_net \
+                       --env-file=docker_files/tests.env \
                        -v bmo_data:/app/data \
-                       -it \
                        $BMO_IMAGE_NAME:$CIRCLE_BRANCH load_test_data
       - run:
         name: start httpd for testing web services
         command: |
           docker run --name bmo-web \
                      --network bmo_net \
+                     --env-file=docker_files/tests.env \
                      -v bmo_data:/app/data \
                      -d \
                      $BMO_IMAGE_NAME:$CIRCLE_BRANCH httpd
@@ -61,8 +65,8 @@ jobs:
           name: check heartbeat
           command: |
             docker run --network bmo_net \
+                       --env-file=docker_files/tests.env \
                        -v bmo_data:/app/data \
-                       -it \
                        $BMO_IMAGE_NAME:$CIRCLE_BRANCH test_heartbeat
       - run:
           name: upload to dockerhub (if possible)
