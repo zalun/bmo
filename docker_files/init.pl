@@ -26,13 +26,18 @@ sub cmd_httpd  {
     system_verbose( '/usr/sbin/httpd', '-DFOREGROUND', '-f', '/opt/bmo/httpd/httpd.conf', @_ );
 }
 
+sub cmd_qa_httpd {
+    copy_qa_extension();
+    cmd_httpd();
+}
+
 sub cmd_load_test_data {
     wait_for_db();
 
     system_verbose( 'perl', 'checksetup.pl', '--no-template', "/app/docker_files/checksetup_answers.txt" );
     system_verbose( 'perl', 'scripts/generate_bmo_data.pl', '--user-pref', 'ui_experiments=off' );
     chdir('/app/qa/config');
-    warn 'chdir(/app/qa/config)\n';
+    say 'chdir(/app/qa/config)';
     system_verbose('perl', 'generate_test_data.pl');
 }
 
@@ -55,6 +60,7 @@ sub cmd_test_webservices {
     check_data_dir();
     wait_for_db();
     wait_for_httpd($conf->{browser_url});
+    copy_qa_extension();
 
     chdir('/app/qa/t');
     system_verbose( 'prove', '-f', '-I/app', '-I/app/local/lib/perl5',
@@ -70,6 +76,11 @@ sub system_verbose {
     system(@_) and die "exited badly: $?";
 }
 
+sub copy_qa_extension {
+    say "copying the QA extension...";
+    dircopy('/app/qa/extensions/QA', '/app/extensions/QA');
+}
+
 sub wait_for_db {
     die "/app/localconfig is missing\n" unless -f "/app/localconfig";
 
@@ -77,7 +88,7 @@ sub wait_for_db {
     my $dsn = "dbi:mysql:database=$c->{db_name};host=$c->{db_host}";
     my $dbh;
     foreach (1..12) {
-        warn "checking database...\n" if $_ > 1;
+        say "checking database..." if $_ > 1;
         $dbh = DBI->connect(
             $dsn,
             $c->{db_user},
@@ -85,7 +96,7 @@ sub wait_for_db {
             { RaiseError => 0, PrintError => 0 }
         );
         last if $dbh;
-        warn "database not available, waiting...\n";
+        say 'database not available, waiting...';
         sleep(10);
     }
     die "unable to connect to $dsn as $c->{db_user}\n" unless $dbh;
@@ -95,13 +106,13 @@ sub wait_for_httpd {
     my ($url) = @_;
     my $ok = 0;
     foreach (1..12) {
-        warn "checking if httpd is up...\n" if $_ > 1;
+        say 'checking if httpd is up...' if $_ > 1;
         my $resp = get("$url/__lbheartbeat__");
         if ($resp =~ /^httpd OK$/) {
             $ok = 1;
             last;
         }
-        warn "httpd doesn't seem to be up at $url. waiting...\n";
+        say "httpd doesn't seem to be up at $url. waiting...";
         sleep(10);
     }
     die "unable to connect to httpd at $url\n" unless $ok;
