@@ -15,14 +15,55 @@ jobs:
       - setup_remote_docker
       - run:
           name: install git and ssh
-          command: apk update && apk add git openssh-client
+          command: apk update && apk add git openssh-client perl
       - checkout
       - run:
           name: build container
           command: docker build -t $BMO_IMAGE_NAME:$CIRCLE_BRANCH .
       - run:
           name: run sanity tests
-          command: docker run $BMO_IMAGE_NAME:$CIRCLE_BRANCH test
+          command: docker run $BMO_IMAGE_NAME:$CIRCLE_BRANCH prove t
+      - run:
+          name: create bmo network
+          command: docker network create bmo_net
+      - run:
+          name: create /data volume
+          command: docker volume create bmo_data
+      - run:
+          name: start mysql
+          command: |
+            docker run --name bmo-mysql \
+                       --network bmo_net \
+                       --env-file=docker_files/tests.env \
+                       --rm -d \
+                       mozillabteam/mysql:5.6
+      - run:
+          name: start memcached
+          command: docker run --name bmo-memcached --network bmo_net -d memcached
+
+      - run:
+          name: populate mysql and data volume
+          command: |
+            docker run --network bmo_net \
+                       -v bmo_data:/app/data \
+                       -it \
+                       $BMO_IMAGE_NAME:$CIRCLE_BRANCH load_test_data
+      - run:
+        name: start httpd for testing web services
+        command: |
+          docker run --name bmo-web \
+                     --network bmo_net \
+                     -v bmo_data:/app/data \
+                     -d \
+                     $BMO_IMAGE_NAME:$CIRCLE_BRANCH httpd
+
+      - run:
+          name: check heartbeat
+          command: |
+            docker run --network bmo_net \
+                       -v bmo_data:/app/data \
+                       -it \
+                       $BMO_IMAGE_NAME:$CIRCLE_BRANCH test_heartbeat
       - run:
           name: upload to dockerhub (if possible)
           command: |
