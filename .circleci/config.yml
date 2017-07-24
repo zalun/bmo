@@ -68,6 +68,13 @@ jobs:
                        -v bmo_data:/app/data \
                        $BMO_IMAGE_NAME:$CIRCLE_BRANCH test_heartbeat
       - run:
+          name: test webservices
+          command: |
+            docker run --network bmo_net \
+                       --env-file=docker_files/tests.env \
+                       -v bmo_data:/app/data \
+                       $BMO_IMAGE_NAME:$CIRCLE_BRANCH test_webservices
+      - run:
           name: upload to dockerhub (if possible)
           command: |
             if [[ -n "$DOCKER_USER" && -n "$DOCKER_PASS" ]]; then
