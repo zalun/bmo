@@ -60,7 +60,6 @@ jobs:
                        -v bmo_data:/app/data \
                        -d \
                        $BMO_IMAGE_NAME:$CIRCLE_BRANCH httpd
-
       - run:
           name: check heartbeat
           command: |
