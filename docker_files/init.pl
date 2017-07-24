@@ -36,7 +36,7 @@ sub cmd_load_test_data {
     system_verbose('perl', 'generate_test_data.pl');
 }
 
-sub cmd_test_health {
+sub cmd_test_heartbeat {
     my $conf = require $ENV{BZ_QA_CONF_FILE};
     wait_for_httpd($conf->{browser_url});
     my $heartbeat = get("$conf->{browser_url}/__heartbeat__");
