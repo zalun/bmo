@@ -27,7 +27,6 @@ sub cmd_httpd  {
 }
 
 sub cmd_load_test_data {
-    check_data_dir();
     wait_for_db();
 
     system_verbose( 'perl', 'checksetup.pl', '--no-template', "/app/docker_files/checksetup_answers.txt" );
