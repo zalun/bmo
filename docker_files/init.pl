@@ -18,12 +18,12 @@ my $func = __PACKAGE__->can("cmd_$cmd") // sub { system_verbose($cmd, @ARGV) };
 check_env();
 check_localconfig();
 write_localconfig( localconfig_from_env() );
-$func->();
+$func->(@ARGV);
 
 sub cmd_httpd  {
     check_data_dir();
     wait_for_db();
-    system_verbose( '/usr/sbin/httpd', '-DFOREGROUND', '-f', '/opt/bmo/httpd/httpd.conf' );
+    system_verbose( '/usr/sbin/httpd', '-DFOREGROUND', '-f', '/opt/bmo/httpd/httpd.conf', @_ );
 }
 
 sub cmd_load_test_data {

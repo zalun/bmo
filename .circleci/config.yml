@@ -15,7 +15,7 @@ jobs:
       - setup_remote_docker
       - run:
           name: install git and ssh
-          command: apk update && apk add git openssh-client perl
+          command: apk update && apk add git openssh-client
       - checkout
       - run:
           name: build container
@@ -59,7 +59,7 @@ jobs:
                        --env-file=docker_files/tests.env \
                        -v bmo_data:/app/data \
                        -d \
-                       $BMO_IMAGE_NAME:$CIRCLE_BRANCH httpd
+                       $BMO_IMAGE_NAME:$CIRCLE_BRANCH httpd -DHTTPD_IN_SUBDIR
       - run:
           name: check heartbeat
           command: |
