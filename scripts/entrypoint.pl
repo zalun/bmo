@@ -258,7 +258,7 @@ sub on_finish {
     my ($f) = @_;
     return sub {
         my ($self, $exitcode) = @_;
-        $f->done($exitcode);
+        $f->done(WEXITSTATUS($exitcode));
     };
 }
 
