@@ -85,7 +85,11 @@ sub cmd_test_webservices {
     prove_with_httpd(
         httpd_url => $conf->{browser_url},
         httpd_cmd => \@httpd_cmd,
-        prove_cmd => [ 'prove', '-qf', '-I/app', '-I/app/local/lib/perl5', glob('webservice_*.t') ],
+        prove_cmd => [
+            'prove', '-qf', '-I/app',
+            '-I/app/local/lib/perl5',
+            sub { glob('webservice_*.t') },
+        ],
         prove_dir => '/app/qa/t',
     );
 }
@@ -103,7 +107,11 @@ sub cmd_test_selenium {
     prove_with_httpd(
         httpd_url => $conf->{browser_url},
         httpd_cmd => \@httpd_cmd,
-        prove_cmd => [ 'prove', '-qf', '-Ilib', '-I/app', '-I/app/local/lib/perl5', glob('test_*.t') ],
+        prove_cmd => [
+            'prove', '-qf', '-Ilib', '-I/app',
+            '-I/app/local/lib/perl5',
+            sub { glob('test_*.t') }
+        ],
         prove_dir => '/app/qa/t',
     );
 }
@@ -144,7 +152,7 @@ sub prove_with_httpd {
         },
         setup => [
              stdout => ["open", ">", "/app/logs/access.log"],
-              stderr => ["open", ">", "/app/logs/error.log"],
+             stderr => ["open", ">", "/app/logs/error.log"],
         ],
         on_finish => on_finish($httpd_exit_f),
         on_exception => on_exception('httpd', $httpd_exit_f),
@@ -158,7 +166,9 @@ sub prove_with_httpd {
     my $prove = IO::Async::Process->new(
         code => sub {
             chdir($param{prove_dir}) if $param{prove_dir};
-            exec(@$prove_cmd);
+            my @cmd = (map { ref $_ eq 'CODE' ? $_->() : $_ } @$prove_cmd);
+            warn "run @cmd\n";
+            exec(@cmd);
         },
         on_finish    => on_finish($prove_exit_f),
         on_exception => on_exception('prove', $prove_exit_f),
