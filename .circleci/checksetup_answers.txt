@@ -10,3 +10,4 @@ $answer{'password_complexity'} = 'bmo';
 $answer{'diffpath'} = '/usr/bin';
 $answer{'interdiffbin'} = '/usr/bin/interdiff';
 $answer{'urlbase'} = 'http://<<HOSTNAME>>:8000/';
+$answer{'mail_delivery_method'} = 'Test';

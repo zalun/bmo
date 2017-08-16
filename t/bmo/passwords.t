@@ -2,8 +2,10 @@
 use 5.10.1;
 use strict;
 use warnings;
-use Test::More 1.302;
+use autodie;
 use constant DRIVER => 'Test::Selenium::Remote::Driver';
+
+use Test::More 1.302;
 #use constant DRIVER => 'Test::Selenium::Chrome';
 BEGIN { plan skip_all => "these tests only run in CI" unless $ENV{CI} && $ENV{CIRCLE_JOB} eq 'test_bmo' };
 
@@ -27,6 +29,7 @@ BAIL_OUT("Missing env: @missing_env") if @missing_env;
 
 eval {
     my $sel = DRIVER->new(base_url => $ENV{BZ_BASE_URL});
+    $sel->set_implicit_wait_timeout(600);
 
     login_ok($sel, $ADMIN_LOGIN, $ADMIN_PW_OLD);
 
@@ -53,7 +56,7 @@ eval {
 
     login_ok($sel, $ENV{BZ_TEST_NEWBIE}, $ENV{BZ_TEST_NEWBIE_PASS});
 
-    $sel->get("/editusers.cgi");
+    $sel->get_ok("/editusers.cgi");
     $sel->title_is("Authorization Required");
     logout_ok($sel);
 
@@ -65,19 +68,62 @@ eval {
     login($sel, $ENV{BZ_TEST_NEWBIE}, $ENV{BZ_TEST_NEWBIE_PASS});
     $sel->title_is('Password change required');
     click_and_type($sel, "old_password", $ENV{BZ_TEST_NEWBIE_PASS});
+    click_and_type($sel, "new_password1", "password");
+    click_and_type($sel, "new_password2", "password");
+    submit($sel, '//input[@id="submit"]');
+    $sel->title_is('Password Fails Requirements');
+
+    $sel->go_back_ok();
+    $sel->title_is('Password change required');
+    click_and_type($sel, "old_password", $ENV{BZ_TEST_NEWBIE_PASS});
     click_and_type($sel, "new_password1", "!!" . $ENV{BZ_TEST_NEWBIE_PASS});
     click_and_type($sel, "new_password2", "!!" . $ENV{BZ_TEST_NEWBIE_PASS});
     submit($sel, '//input[@id="submit"]');
     $sel->title_is('Password Changed');
-    change_password($sel, "!!" . $ENV{BZ_TEST_NEWBIE_PASS}, $ENV{BZ_TEST_NEWBIE_PASS}, $ENV{BZ_TEST_NEWBIE_PASS});
+    change_password(
+        $sel,
+        "!!" . $ENV{BZ_TEST_NEWBIE_PASS},
+        $ENV{BZ_TEST_NEWBIE_PASS},
+        $ENV{BZ_TEST_NEWBIE_PASS}
+    );
     $sel->title_is("User Preferences");
-    logout_ok($sel);
 
-
+    $sel->get_ok("/userprefs.cgi?tab=account");
+    $sel->title_is("User Preferences");
+    click_link($sel, "I forgot my password");
+    $sel->body_text_contains(
+        ["A token for changing your password has been emailed to you.",
+         "Follow the instructions in that email to change your password."],
+    );
+    my $token = get_token();
+    ok($token, "got a token from resetting password");
+    $sel->get_ok("/token.cgi?t=$token&a=cfmpw");
+    $sel->title_is('Change Password');
+    click_and_type($sel, "password", "nopandas");
+    click_and_type($sel, "matchpassword", "nopandas");
+    submit($sel, '//input[@id="update"]');
+    $sel->title_is('Password Fails Requirements');
+    $sel->go_back_ok();
+    $sel->title_is('Change Password');
+    click_and_type($sel, "password", '??' . $ENV{BZ_TEST_NEWBIE_PASS});
+    click_and_type($sel, "matchpassword", '??' . $ENV{BZ_TEST_NEWBIE_PASS});
+    submit($sel, '//input[@id="update"]');
+    $sel->title_is('Password Changed');
+    $sel->get_ok("/token.cgi?t=$token&a=cfmpw");
+    $sel->title_is('Token Does Not Exist');
+    $sel->get_ok("/login");
+    $sel->title_is('Log in to Bugzilla');
+    login_ok($sel, $ENV{BZ_TEST_NEWBIE}, "??" . $ENV{BZ_TEST_NEWBIE_PASS});
+    change_password(
+        $sel,
+        "??" . $ENV{BZ_TEST_NEWBIE_PASS},
+        $ENV{BZ_TEST_NEWBIE_PASS},
+        $ENV{BZ_TEST_NEWBIE_PASS}
+    );
+    $sel->title_is("User Preferences");
 };
 if ($@) {
-    fail("bailing out");
-    BAIL_OUT($@);
+    fail("got exception $@");
 }
 done_testing();
 
@@ -86,11 +132,34 @@ sub submit {
     $sel->find_element($xpath, 'xpath')->submit();
 }
 
+sub get_token {
+    my $token;
+    my $count = 0;
+    do {
+        sleep 1 if $count++;
+        open my $fh, '<', '/app/data/mailer.testfile';
+        my $content = do {
+            local $/ = undef;
+            <$fh>;
+        };
+        ($token) = $content =~ m!/token\.cgi\?t=3D([^&]+)&a=3Dcfmpw!s;
+        close $fh;
+    } until $token || $count > 60;
+    return $token;
+}
+
 sub click_and_type {
     my ($sel, $name, $text) = @_;
-    my $el = $sel->find_element(qq{//input[\@name="$name"]}, 'xpath');
-    $el->click();
-    $sel->send_keys_to_active_element($text);
+
+    eval {
+        my $el = $sel->find_element(qq{//input[\@name="$name"]}, 'xpath');
+        $el->click();
+        $sel->send_keys_to_active_element($text);
+        pass("found $name and typed $text");
+    };
+    if ($@) {
+        fail("failed to find $name");
+    }
 }
 
 sub click_link {
@@ -101,7 +170,7 @@ sub click_link {
 
 sub change_password {
     my ($sel, $old, $new1, $new2) = @_;
-    $sel->get("/userprefs.cgi?tab=account");
+    $sel->get_ok("/userprefs.cgi?tab=account");
     $sel->title_is("User Preferences");
     click_and_type($sel, "old_password", $old);
     click_and_type($sel, "new_password1", $new1);
@@ -111,7 +180,7 @@ sub change_password {
 
 sub toggle_require_password_change {
     my ($sel, $login) = @_;
-    $sel->get("/editusers.cgi");
+    $sel->get_ok("/editusers.cgi");
     $sel->title_is("Search users");
     click_and_type($sel, 'matchstr', $login);
     submit($sel, '//input[@id="search"]');
@@ -125,7 +194,7 @@ sub toggle_require_password_change {
 sub login {
     my ($sel, $login, $password) = @_;
 
-    $sel->get("/login");
+    $sel->get_ok("/login");
     $sel->title_is("Log in to Bugzilla");
     click_and_type($sel, 'Bugzilla_login', $login);
     click_and_type($sel, 'Bugzilla_password', $password);
@@ -140,6 +209,6 @@ sub login_ok {
 
 sub logout_ok {
     my ($sel) = @_;
-    $sel->get('/index.cgi?logout=1');
+    $sel->get_ok('/index.cgi?logout=1');
     $sel->title_is("Logged Out");
 }

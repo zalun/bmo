@@ -55,7 +55,7 @@ sub cmd_load_test_data {
         run( 'perl', 'generate_test_data.pl' );
     }
     else {
-        run( 'perl', 'scripts/generate_bmo_data.pl' );
+        run( 'perl', 'scripts/generate_bmo_data.pl', '--param' => 'use_mailer_queue=0' );
     }
 }
 
@@ -129,7 +129,7 @@ sub cmd_test_bmo {
     check_data_dir();
     wait_for_db();
 
-    $ENV{BZ_TEST_NEWBIE} = 'newbie@mozilla.bugs';
+    $ENV{BZ_TEST_NEWBIE} = 'newbie@mozilla.example';
     $ENV{BZ_TEST_NEWBIE_PASS} = 'captain.space.bagel.ROBOT!';
     create_user($ENV{BZ_TEST_NEWBIE}, $ENV{BZ_TEST_NEWBIE_PASS}, realname => "Newbie User");
 
