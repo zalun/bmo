@@ -204,7 +204,6 @@ Example response for authenticated user:
           "maxlocalattachment" : "0",
           "musthavemilestoneonaccept" : "0",
           "noresolveonopenblockers" : "0",
-          "password_complexity" : "no_constraints",
           "rememberlogin" : "on",
           "requirelogin" : "0",
           "urlbase" : "http://bugzilla.example.com/",
@@ -242,7 +241,6 @@ A logged-in user can access the following parameters (listed alphabetically):
 * maxlocalattachment
 * musthavemilestoneonaccept
 * noresolveonopenblockers
-* password_complexity
 * rememberlogin
 * requirelogin
 * search_allow_no_criteria

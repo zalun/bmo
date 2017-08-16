@@ -107,18 +107,41 @@ sub get_param_list {
         },
 
         {
-            name    => 'password_complexity',
-            type    => 's',
-            choices => [ 'no_constraints', 'bmo' ],
-            default => 'no_constraints',
-            checker => \&check_multi
-        },
-
-        {
             name    => 'password_check_on_login',
             type    => 'b',
             default => '1'
         },
+
+        {
+            name => 'passwdqc_min',
+            type => 't',
+            default => 'undef, 24, 11, 8, 7',
+        },
+
+        {
+            name => 'passwdqc_max',
+            type => 't',
+            default => '40',
+        },
+
+        {
+            name => 'passwdqc_passphrase_words',
+            type => 't',
+            default => '3',
+        },
+
+        {
+            name => 'passwdqc_match_length',
+            type => 't',
+            default => '4',
+        },
+
+        {
+            name => 'passwdqc_random_bits',
+            type => 't',
+            default => '47',
+        },
+
         {
             name    => 'auth_delegation',
             type    => 'b',
