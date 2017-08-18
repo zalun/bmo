@@ -242,6 +242,7 @@ $sel->type_ok("comment", "--- Bug created by Selenium ---", "Enter bug descripti
 $sel->click_ok("commit", undef, "Submit bug data to post_bug.cgi");
 $sel->wait_for_page_to_load_ok(WAIT_TIME);
 $sel->is_text_present_ok('has been added to the database', 'Bug created');
+screenshot_page($sel, "/app/artifacts/power_bug_id.png");
 my $poweredby_bug_id = $sel->get_value('//input[@name="id" and @type="hidden"]');
 
 set_parameters($sel, { "Bug Fields" => {"useclassification-on" => undef} });
