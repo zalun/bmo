@@ -170,6 +170,7 @@ sub process_revision_change {
         $self->logger->debug('Bug is public so setting view/edit public');
         $revision->set_policy('view', 'public');
         $revision->set_policy('edit', 'users');
+        $revision->remove_project('secure-revision');
     }
     # else bug is private.
     else {
@@ -211,6 +212,7 @@ sub process_revision_change {
                 $revision->set_policy('view', $new_policy->phid);
                 $revision->set_policy('edit', $new_policy->phid);
             }
+            $revision->add_project('secure-revision');
 
             my $subscribers = get_bug_role_phids($bug);
             $revision->set_subscribers($subscribers);

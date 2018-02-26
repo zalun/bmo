@@ -17,6 +17,7 @@ use Bugzilla::Util qw(trim);
 use Bugzilla::Extension::PhabBugz::Util qw(
     get_phab_bmo_ids
     request
+    get_project_phid
 );
 
 use Types::Standard -all;
@@ -231,6 +232,20 @@ sub update {
         }
     }
 
+    if ($self->{add_projects}) {
+        push(@{ $data->{transactions} }, {
+            type => 'projects.add',
+            value => $self->{add_projects}
+        });
+    }
+
+    if ($self->{remove_projects}) {
+        push(@{ $data->{transactions} }, {
+            type => 'projects.remove',
+            value => $self->{remove_projects}
+        });
+    }
+
     my $result = request('differential.revision.edit', $data);
 
     return $result;
@@ -379,6 +394,36 @@ sub set_policy {
     my ($self, $name, $policy) = @_;
     $self->{set_policy} ||= {};
     $self->{set_policy}->{$name} = $policy;
+}
+
+sub add_project {
+    my ($self, $project) = @_;
+    my $project_phid;
+
+    $self->{add_projects} ||= [];
+    # We allow $project to be provided by its name or by the hash
+    if (ref $project ne ref {}) {
+        $project_phid = get_project_phid($project);
+    } else {
+        $project_phid = $project->phab_phid;
+    }
+    return undef unless $project_phid;
+    push(@{ $self->{add_projects} }, $project_phid);
+}
+
+sub remove_project {
+    my ($self, $project) = @_;
+    my $project_phid;
+
+    $self->{remove_projects} ||= [];
+    # We allow $project to be provided by its name or by the hash
+    if (ref $project ne ref {}) {
+        $project_phid = get_project_phid($project);
+    } else {
+        $project_phid = $project->phab_phid;
+    }
+    return undef unless $project_phid;
+    push(@{ $self->{remove_projects} }, $project_phid);
 }
 
 1;
